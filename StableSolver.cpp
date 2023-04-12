@@ -7,61 +7,52 @@
 StableSolver::StableSolver(const Settings& aSetting)
 {
     mySettings = aSetting;
-    timeStep = 1.0f;
+    myTimeStep = 1.0f;
 
     const auto gridSize = GetGridSize();
 
-    vx = (float *)malloc(sizeof(float)*gridSize);
-    vy = (float *)malloc(sizeof(float)*gridSize);
-    vx0 = (float *)malloc(sizeof(float)*gridSize);
-    vy0 = (float *)malloc(sizeof(float)*gridSize);
-    d = (float *)malloc(sizeof(float)*gridSize);
-    d0 = (float *)malloc(sizeof(float)*gridSize);
-    px = (float *)malloc(sizeof(float)*gridSize);
-    py = (float *)malloc(sizeof(float)*gridSize);
-    div = (float *)malloc(sizeof(float)*gridSize);
-    p = (float *)malloc(sizeof(float)*gridSize);
+    myVx = (float *)malloc(sizeof(float)*gridSize);
+    myVy = (float *)malloc(sizeof(float)*gridSize);
+    myVx0 = (float *)malloc(sizeof(float)*gridSize);
+    myVy0 = (float *)malloc(sizeof(float)*gridSize);
+    myD = (float *)malloc(sizeof(float)*gridSize);
+    myD0 = (float *)malloc(sizeof(float)*gridSize);
+    myPx = (float *)malloc(sizeof(float)*gridSize);
+    myPy = (float *)malloc(sizeof(float)*gridSize);
+    myDiv = (float *)malloc(sizeof(float)*gridSize);
+    myP = (float *)malloc(sizeof(float)*gridSize);
 
     //vorticity confinement
-    vort = (float *)malloc(sizeof(float)*gridSize);
-    absVort = (float *)malloc(sizeof(float)*gridSize);
-    gradVortX = (float *)malloc(sizeof(float)*gridSize);
-    gradVortY = (float *)malloc(sizeof(float)*gridSize);
-    lenGrad = (float *)malloc(sizeof(float)*gridSize);
-    vcfx = (float *)malloc(sizeof(float)*gridSize);
-    vcfy = (float *)malloc(sizeof(float)*gridSize);
+    myVort = (float *)malloc(sizeof(float)*gridSize);
+    myVortFx = (float *)malloc(sizeof(float)*gridSize);
+    myVortFy = (float *)malloc(sizeof(float)*gridSize);
 
     for(int i=0; i<SIDE; i++)
     {
         for(int j=0; j<SIDE; j++)
         {
-            px[IDX_1D(i, j)] = (float)i+0.5f;
-            py[IDX_1D(i, j)] = (float)j+0.5f;
+            myPx[IDX_1D(i, j)] = (float)i+0.5f;
+            myPy[IDX_1D(i, j)] = (float)j+0.5f;
         }
     }
 }
 
 StableSolver::~StableSolver()
 {
-    free(vx);
-    free(vy);
-    free(vx0);
-    free(vy0);
-    free(d);
-    free(d0);
-    free(px);
-    free(py);
-    free(div);
-    free(p);
+    free(myVx);
+    free(myVy);
+    free(myVx0);
+    free(myVy0);
+    free(myD);
+    free(myD0);
+    free(myPx);
+    free(myPy);
+    free(myDiv);
+    free(myP);
 
-    //vorticity confinement
-    free(vort);
-    free(absVort);
-    free(gradVortX);
-    free(gradVortY);
-    free(lenGrad);
-    free(vcfx);
-    free(vcfy);
+    free(myVort);
+    free(myVortFx);
+    free(myVortFy);
 }
 
 void StableSolver::ClearBuffer(const ClearMode aClearMode)
@@ -70,15 +61,15 @@ void StableSolver::ClearBuffer(const ClearMode aClearMode)
 
     switch (aClearMode) {
         case ClearMode::Internal: {
-            memset(d0, 0, sizeof(float) * gridSize);
-            memset(vx0, 0, sizeof(float) * gridSize);
-            memset(vy0, 0, sizeof(float) * gridSize);
+            memset(myD0, 0, sizeof(float) * gridSize);
+            memset(myVx0, 0, sizeof(float) * gridSize);
+            memset(myVy0, 0, sizeof(float) * gridSize);
             break;
         }
         case ClearMode::Sources: {
-            memset(d, 0, sizeof(float)*gridSize);
-            memset(vx, 0, sizeof(float)*gridSize);
-            memset(vy, 0, sizeof(float)*gridSize);
+            memset(myD, 0, sizeof(float)*gridSize);
+            memset(myVx, 0, sizeof(float)*gridSize);
+            memset(myVy, 0, sizeof(float)*gridSize);
             break;
         }
         default: break;
@@ -115,40 +106,46 @@ void StableSolver::Projection()
     {
         for(int j=1; j<=SIDE-2; j++)
         {
-            div[IDX_1D(i, j)] = 0.5f * (
-                    vx[IDX_1D(i+1, j)]-
-                    vx[IDX_1D(i-1, j)]+
-                    vy[IDX_1D(i, j+1)]-
-                    vy[IDX_1D(i, j-1)]);
-            p[IDX_1D(i, j)] = 0.0f;;
+            myDiv[IDX_1D(i, j)] = 0.5f * (
+                    myVx[IDX_1D(i+1, j)]-
+                    myVx[IDX_1D(i-1, j)]+
+                    myVy[IDX_1D(i, j+1)]-
+                    myVy[IDX_1D(i, j-1)]);
+            myP[IDX_1D(i, j)] = 0.0f;;
         }
     }
-    SetBoundary(div, 0);
-    SetBoundary(p, 0);
+    SetBoundary(myDiv, 0);
+    SetBoundary(myP, 0);
 
     constexpr auto projectionIterations = 20;
+    constexpr auto factor = 1.f/4.f;
     for(int k=0; k<projectionIterations; k++)
     {
         for(int i=1; i<=SIDE-2; i++)
         {
             for(int j=1; j<=SIDE-2; j++)
             {
-                p[IDX_1D(i, j)] = (p[IDX_1D(i+1, j)]+p[IDX_1D(i-1, j)]+p[IDX_1D(i, j+1)]+p[IDX_1D(i, j-1)]-div[IDX_1D(i, j)])/4.0f;
+                myP[IDX_1D(i, j)] = (myP[IDX_1D(i+1, j)] +
+                        myP[IDX_1D(i-1, j)] +
+                        myP[IDX_1D(i, j+1)] +
+                        myP[IDX_1D(i, j-1)] -
+                        myDiv[IDX_1D(i, j)]) * factor;
             }
         }
-        SetBoundary(p, 0);
+        SetBoundary(myP, 0);
     }
 
     for(int i=1; i<=SIDE-2; i++)
     {
         for(int j=1; j<=SIDE-2; j++)
         {
-            vx[IDX_1D(i, j)] -= 0.5f*(p[IDX_1D(i+1, j)]-p[IDX_1D(i-1, j)]);
-            vy[IDX_1D(i, j)] -= 0.5f*(p[IDX_1D(i, j+1)]-p[IDX_1D(i, j-1)]);
+            myVx[IDX_1D(i, j)] -= 0.5f*(myP[IDX_1D(i+1, j)] - myP[IDX_1D(i-1, j)]);
+            myVy[IDX_1D(i, j)] -= 0.5f*(myP[IDX_1D(i, j+1)] - myP[IDX_1D(i, j-1)]);
         }
     }
-    SetBoundary(vx, 1);
-    SetBoundary(vy, 2);
+
+    SetBoundary(myVx, 1);
+    SetBoundary(myVy, 2);
 }
 
 void StableSolver::Advection(float *value, const float *value0, const float *u, const float *v, int flag)
@@ -168,8 +165,8 @@ void StableSolver::Advection(float *value, const float *value0, const float *u, 
     {
         for(int j=1; j<=SIDE-2; j++)
         {
-            oldX = px[IDX_1D(i, j)] - u[IDX_1D(i, j)]*timeStep;
-            oldY = py[IDX_1D(i, j)] - v[IDX_1D(i, j)]*timeStep;
+            oldX = myPx[IDX_1D(i, j)] - u[IDX_1D(i, j)]*myTimeStep;
+            oldY = myPy[IDX_1D(i, j)] - v[IDX_1D(i, j)]*myTimeStep;
             
             if(oldX < 1.0f) oldX = 1.0f;
             if(oldX > SIDE-1) oldX = SIDE-1;
@@ -181,9 +178,9 @@ void StableSolver::Advection(float *value, const float *value0, const float *u, 
             i1 = i0+1;
             j1 = j0+1;
             
-            wL = px[IDX_1D(i1, j0)]-oldX;
+            wL = myPx[IDX_1D(i1, j0)]-oldX;
             wR = 1.0f-wL;
-            wB = py[IDX_1D(i0, j1)]-oldY;
+            wB = myPy[IDX_1D(i0, j1)]-oldY;
             wT = 1.0f-wB;
 
             value[IDX_1D(i, j)] = wB*(wL*value0[IDX_1D(i0, j0)]+wR*value0[IDX_1D(i1, j0)])+
@@ -196,7 +193,8 @@ void StableSolver::Advection(float *value, const float *value0, const float *u, 
 
 void StableSolver::Diffusion(float *value, const float *value0, float rate, int flag)
 {
-    float a = rate*timeStep;
+    const auto a = rate*myTimeStep;
+    const auto factor = 1.f / (4.0f * a + 1.0f);
 
     constexpr auto diffusionIterations = 20;
     for(int k=0; k<diffusionIterations; k++)
@@ -205,7 +203,11 @@ void StableSolver::Diffusion(float *value, const float *value0, float rate, int 
         {
             for(int j=1; j<=SIDE-2; j++)
             {
-                value[IDX_1D(i, j)] = (value0[IDX_1D(i, j)]+a*(value[IDX_1D(i+1, j)]+value[IDX_1D(i-1, j)]+value[IDX_1D(i, j+1)]+value[IDX_1D(i, j-1)])) / (4.0f*a+1.0f);
+                value[IDX_1D(i, j)] = (value0[IDX_1D(i, j)] + a *
+                        (value[IDX_1D(i+1, j)] +
+                        value[IDX_1D(i-1, j)] +
+                        value[IDX_1D(i, j+1)] +
+                        value[IDX_1D(i, j-1)])) * factor;
             }
         }
         SetBoundary(value, flag);
@@ -218,61 +220,63 @@ void StableSolver::VortexConfinement()
     {
         for(int j=1; j<=SIDE-2; j++)
         {
-            vort[IDX_1D(i, j)] = 0.5f*(vy[IDX_1D(i+1, j)]-vy[IDX_1D(i-1, j)]-vx[IDX_1D(i, j+1)]+vx[IDX_1D(i, j-1)]);
-            if(vort[IDX_1D(i, j)] >= 0.0f) absVort[IDX_1D(i, j)] = vort[IDX_1D(i, j)];
-            else absVort[IDX_1D(i, j)] = -vort[IDX_1D(i, j)];
+            myVort[IDX_1D(i, j)] = 0.5f * (myVy[IDX_1D(i+1, j)] - myVy[IDX_1D(i-1, j)] - myVx[IDX_1D(i, j+1)] + myVx[IDX_1D(i, j-1)]);
         }
     }
-    SetBoundary(vort, 0);
-    SetBoundary(absVort, 0);
 
-    for(int i=1; i<=SIDE-2; i++)
+    SetBoundary(myVort, 0);
+
+    for(int i=1; i < SIDE-1; ++i)
     {
-        for(int j=1; j<=SIDE-2; j++)
+        for(int j=1; j < SIDE-1; ++j)
         {
-            gradVortX[IDX_1D(i, j)] = 0.5f*(absVort[IDX_1D(i+1, j)]-absVort[IDX_1D(i-1, j)]);
-            gradVortY[IDX_1D(i, j)] = 0.5f*(absVort[IDX_1D(i, j+1)]-absVort[IDX_1D(i, j-1)]);
-            lenGrad[IDX_1D(i, j)] = sqrt(gradVortX[IDX_1D(i, j)]*gradVortX[IDX_1D(i, j)]+gradVortY[IDX_1D(i, j)]*gradVortY[IDX_1D(i, j)]);
-            if(lenGrad[IDX_1D(i, j)] < 0.01f)
+            const auto currentGradVortX = 0.5f * (std::abs(myVort[IDX_1D(i+1, j)]) - std::abs(myVort[IDX_1D(i-1, j)]));
+            const auto currentGradVortY = 0.5f * (std::abs(myVort[IDX_1D(i, j+1)]) - std::abs(myVort[IDX_1D(i, j-1)]));
+            const auto currentLenGrad = std::sqrt(std::pow(currentGradVortX, 2) + std::pow(currentGradVortY, 2));
+
+            constexpr auto zeroDistance = 0.01f;
+            if(std::fabs(currentLenGrad) < zeroDistance)
             {
-                vcfx[IDX_1D(i, j)] = 0.0f;
-                vcfy[IDX_1D(i, j)] = 0.0f;
+                myVortFx[IDX_1D(i, j)] = 0;
+                myVortFy[IDX_1D(i, j)] = 0;
             }
             else
             {
-                vcfx[IDX_1D(i, j)] = gradVortX[IDX_1D(i, j)] / lenGrad[IDX_1D(i, j)];
-                vcfy[IDX_1D(i, j)] = gradVortY[IDX_1D(i, j)] / lenGrad[IDX_1D(i, j)];
+                const auto factor = 1.f / currentLenGrad;
+                myVortFx[IDX_1D(i, j)] = factor * currentGradVortX;
+                myVortFy[IDX_1D(i, j)] = factor * currentGradVortY;
             }
         }
     }
-    SetBoundary(vcfx, 0);
-    SetBoundary(vcfy, 0);
+
+    SetBoundary(myVortFx, 0);
+    SetBoundary(myVortFy, 0);
 
     for(int i=1; i<=SIDE-2; i++)
     {
         for(int j=1; j<=SIDE-2; j++)
         {
-            vx[IDX_1D(i, j)] += mySettings.vorticity * (vcfy[IDX_1D(i, j)] * vort[IDX_1D(i, j)]);
-            vy[IDX_1D(i, j)] -= mySettings.vorticity * (vcfx[IDX_1D(i, j)] * vort[IDX_1D(i, j)]);
+            myVx[IDX_1D(i, j)] += mySettings.vorticity * (myVortFy[IDX_1D(i, j)] * myVort[IDX_1D(i, j)]);
+            myVy[IDX_1D(i, j)] -= mySettings.vorticity * (myVortFx[IDX_1D(i, j)] * myVort[IDX_1D(i, j)]);
         }
     }
 
-    SetBoundary(vx, 1);
-    SetBoundary(vy, 2);
+    SetBoundary(myVx, 1);
+    SetBoundary(myVy, 2);
 }
 
 void StableSolver::AddSources()
 {
     for(auto idx = 0; idx < SIDE*SIDE; ++idx)
     {
-        vx[idx] += vx0[idx];
-        vy[idx] += vy0[idx];
-        d[idx] += d0[idx];
+        myVx[idx] += myVx0[idx];
+        myVy[idx] += myVy0[idx];
+        myD[idx] += myD0[idx];
     }
 
-    SetBoundary(d, 0);
-    SetBoundary(vx, 1);
-    SetBoundary(vy, 2);
+    SetBoundary(myD, 0);
+    SetBoundary(myVx, 1);
+    SetBoundary(myVy, 2);
 
 }
 
@@ -280,18 +284,18 @@ void StableSolver::VelocityStep()
 {
     if(mySettings.viscosity > 0.0f)
     {
-        std::swap(vx0, vx);
-        std::swap(vy0, vy);
-        Diffusion(vx, vx0, mySettings.viscosity, 1);
-        Diffusion(vy, vy0, mySettings.viscosity, 2);
+        std::swap(myVx0, myVx);
+        std::swap(myVy0, myVy);
+        Diffusion(myVx, myVx0, mySettings.viscosity, 1);
+        Diffusion(myVy, myVy0, mySettings.viscosity, 2);
     }
 
     Projection();
 
-    std::swap(vx0, vx);
-    std::swap(vy0, vy);
-    Advection(vx, vx0, vx0, vy0, 1);
-    Advection(vy, vy0, vx0, vy0, 2);
+    std::swap(myVx0, myVx);
+    std::swap(myVy0, myVy);
+    Advection(myVx, myVx0, myVx0, myVy0, 1);
+    Advection(myVy, myVy0, myVx0, myVy0, 2);
 
     Projection();
 }
@@ -300,10 +304,10 @@ void StableSolver::DensityStep()
 {
     if(mySettings.diffusion > 0.0f)
     {
-        std::swap(d0, d);
-        Diffusion(d, d0, mySettings.diffusion, 0);
+        std::swap(myD0, myD);
+        Diffusion(myD, myD0, mySettings.diffusion, 0);
     }
 
-    std::swap(d0, d);
-    Advection(d, d0, vx, vy, 0);
+    std::swap(myD0, myD);
+    Advection(myD, myD0, myVx, myVy, 0);
 }

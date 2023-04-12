@@ -150,6 +150,7 @@ void ReshapeWindow (int, int)
 
          if(ImGui::Button("Reset"))
          {
+             solver->ClearBuffer(StableSolver::ClearMode::Sources);
              solver->ClearBuffer(StableSolver::ClearMode::Internal);
          }
 
