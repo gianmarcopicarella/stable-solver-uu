@@ -1,12 +1,11 @@
 # ninja log v5
-2	378	1681239236412312022	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_widgets.cpp.o	784b81f87908d1d
-3	223	1681253631605526920	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_tables.cpp.o	378dbe4d6e2caff9
-3	68	1681253631451764119	CMakeFiles/GamePhysicsProject.dir/wrapper/imgui_impl_opengl2.cpp.o	dfbf42fdf3d00fcf
-3	267	1681253605946155462	CMakeFiles/GamePhysicsProject.dir/main.cpp.o	39dffa4ba9bae48c
-3	291	1681253631674626189	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_draw.cpp.o	7a2d1d9584bddb73
-4	234	1681253605913018571	CMakeFiles/GamePhysicsProject.dir/Visualizer.cpp.o	7eae4d42c1c6c45d
-291	350	1681253631733669962	GamePhysicsProject	c848ca1e1aed4a60
-3	55	1681251121126698557	CMakeFiles/GamePhysicsProject.dir/wrapper/imgui_impl_glut.cpp.o	a15e8a0905b8604c
-4	231	1681253605909295005	CMakeFiles/GamePhysicsProject.dir/StableSolver.cpp.o	206e6a7573c08cbc
-3	724	1681236729540746189	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui.cpp.o	3b56bb339226f09f
-3	505	1681240070915160113	CMakeFiles/GamePhysicsProject.dir/GridStableSolver.cpp.o	e35e19186b44a761
+1	91	1681258201133723556	CMakeFiles/GamePhysicsProject.dir/wrapper/imgui_impl_glut.cpp.o	a15e8a0905b8604c
+1	92	1681258201135113122	CMakeFiles/GamePhysicsProject.dir/wrapper/imgui_impl_opengl2.cpp.o	dfbf42fdf3d00fcf
+1	231	1681258201273283211	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_tables.cpp.o	378dbe4d6e2caff9
+1	309	1681258201351229834	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_draw.cpp.o	7a2d1d9584bddb73
+1	328	1681258201370673927	CMakeFiles/GamePhysicsProject.dir/StableSolver.cpp.o	206e6a7573c08cbc
+1	336	1681258201378737370	CMakeFiles/GamePhysicsProject.dir/Visualizer.cpp.o	7eae4d42c1c6c45d
+0	365	1681258201407727179	CMakeFiles/GamePhysicsProject.dir/main.cpp.o	39dffa4ba9bae48c
+2	432	1681258201473967904	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui_widgets.cpp.o	784b81f87908d1d
+1	534	1681258201576561599	CMakeFiles/GamePhysicsProject.dir/externals/imgui/imgui.cpp.o	3b56bb339226f09f
+534	605	1681258201648916290	GamePhysicsProject	c848ca1e1aed4a60

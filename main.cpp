@@ -179,8 +179,6 @@ void ReshapeWindow (int, int)
 
      visualizers[visualizationTypeIndex]->operator()();
 
-     // rgb(245, 163, 2)
-
      glColor3f(0.0f, 0.0f, 0.0f);
      glPointSize(1.0f);
      glBegin(GL_POINTS);

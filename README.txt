@@ -1,0 +1,1 @@
+Check the CMakeLists.txt for the changes needed in order to run the project
