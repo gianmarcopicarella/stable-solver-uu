@@ -1,5 +1,5 @@
 # Semi-Lagrangian 2D Stable Solver
-You can find the original presentation as well as the links mentioned in the presentation's pictures ![here](https://github.com/gianmarcopicarella/stable-solver-uu/blob/master/slides.pdf).
+You can find the original presentation as well as the links mentioned in the following presentation pictures ![here](https://github.com/gianmarcopicarella/stable-solver-uu/blob/master/slides.pdf).
 
 ---
 
