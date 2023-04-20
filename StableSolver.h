@@ -89,7 +89,7 @@ public:
                 myD[IDX_1D(i, j)]) * factor;
     }
 
-    void SetVelocitySource(int i, int j, const std::pair<float, float>& aValue) const
+    void SetVelocitySource(int i, int j, const std::pair<float, float>& aValue)
     {
         assert(i > -1 && i < SIDE && j > -1 && j < SIDE);
 
@@ -103,7 +103,7 @@ public:
         myVy0[index] = aValue.second;
     }
 
-    void SetDensitySource(int i, int j, const float aValue) const
+    void SetDensitySource(int i, int j, const float aValue)
     {
         assert(i > -1 && i < SIDE && j > -1 && j < SIDE);
 
@@ -117,10 +117,10 @@ public:
 
 
 private:
-    void SetBoundary(float *value, int flag);
+    void SetBoundary(int flag, std::vector<float>& anOutValue);
     void Projection();
-    void Advection(float *value, const float *value0, const float *u, const float *v, int flag);
-    void Diffusion(float *value, const float *value0, float rate, int flag);
+    void Advection(std::vector<float>& value, const std::vector<float>& value0, const std::vector<float>& u, const std::vector<float>& v, int flag);
+    void Diffusion(std::vector<float>& value, const std::vector<float>& value0, float rate, int flag);
     void VortexConfinement();
     void AddSources();
     void VelocityStep();
@@ -130,20 +130,21 @@ private:
     Settings mySettings;
     float myTimeStep;
 
-    float* myVx;
-    float* myVy;
-    float* myVx0;
-    float* myVy0;
-    float * myD;
-    float * myD0;
-    float * myPx;
-    float * myPy;
-    float * myDiv;
-    float * myP;
+    std::vector<float> myVx;
+    std::vector<float> myVy;
+    std::vector<float> myVx0;
+    std::vector<float> myVy0;
 
-    float * myVort;
-    float * myVortFx;
-    float * myVortFy;
+    std::vector<float> myD;
+    std::vector<float> myD0;
+    std::vector<float> myPx;
+    std::vector<float> myPy;
+    std::vector<float> myDiv;
+    std::vector<float> myP;
+
+    std::vector<float> myVort;
+    std::vector<float> myVortFx;
+    std::vector<float> myVortFy;
 };
 
 #endif

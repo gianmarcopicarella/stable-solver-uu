@@ -1,1 +1,0 @@
-In order to run this project you need OpenGL2+ and GLUT installed in your system.

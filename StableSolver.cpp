@@ -1,6 +1,5 @@
 #include "StableSolver.h"
 #include <cstdlib>
-#include <cstring>
 #include <array>
 #include <cmath>
 
@@ -11,21 +10,19 @@ StableSolver::StableSolver(const Settings& aSetting)
 
     const auto gridSize = GetGridSize();
 
-    myVx = (float *)malloc(sizeof(float)*gridSize);
-    myVy = (float *)malloc(sizeof(float)*gridSize);
-    myVx0 = (float *)malloc(sizeof(float)*gridSize);
-    myVy0 = (float *)malloc(sizeof(float)*gridSize);
-    myD = (float *)malloc(sizeof(float)*gridSize);
-    myD0 = (float *)malloc(sizeof(float)*gridSize);
-    myPx = (float *)malloc(sizeof(float)*gridSize);
-    myPy = (float *)malloc(sizeof(float)*gridSize);
-    myDiv = (float *)malloc(sizeof(float)*gridSize);
-    myP = (float *)malloc(sizeof(float)*gridSize);
-
-    //vorticity confinement
-    myVort = (float *)malloc(sizeof(float)*gridSize);
-    myVortFx = (float *)malloc(sizeof(float)*gridSize);
-    myVortFy = (float *)malloc(sizeof(float)*gridSize);
+    myVx.resize(gridSize);
+    myVy.resize(gridSize);
+    myVx0.resize(gridSize);
+    myVy0.resize(gridSize);
+    myD.resize(gridSize);
+    myD0.resize(gridSize);
+    myPx.resize(gridSize);
+    myPy.resize(gridSize);
+    myDiv.resize(gridSize);
+    myP.resize(gridSize);
+    myVort.resize(gridSize);
+    myVortFx.resize(gridSize);
+    myVortFy.resize(gridSize);
 
     for(int i=0; i<SIDE; i++)
     {
@@ -37,46 +34,28 @@ StableSolver::StableSolver(const Settings& aSetting)
     }
 }
 
-StableSolver::~StableSolver()
-{
-    free(myVx);
-    free(myVy);
-    free(myVx0);
-    free(myVy0);
-    free(myD);
-    free(myD0);
-    free(myPx);
-    free(myPy);
-    free(myDiv);
-    free(myP);
-
-    free(myVort);
-    free(myVortFx);
-    free(myVortFy);
-}
+StableSolver::~StableSolver() {}
 
 void StableSolver::ClearBuffer(const ClearMode aClearMode)
 {
-    const auto gridSize = GetGridSize();
-
     switch (aClearMode) {
         case ClearMode::Internal: {
-            memset(myD0, 0, sizeof(float) * gridSize);
-            memset(myVx0, 0, sizeof(float) * gridSize);
-            memset(myVy0, 0, sizeof(float) * gridSize);
+            std::fill(myD0.begin(), myD0.end(), 0);
+            std::fill(myVx0.begin(), myVx0.end(), 0);
+            std::fill(myVy0.begin(), myVy0.end(), 0);
             break;
         }
         case ClearMode::Sources: {
-            memset(myD, 0, sizeof(float)*gridSize);
-            memset(myVx, 0, sizeof(float)*gridSize);
-            memset(myVy, 0, sizeof(float)*gridSize);
+            std::fill(myD.begin(), myD.end(), 0);
+            std::fill(myVx.begin(), myVx.end(), 0);
+            std::fill(myVy.begin(), myVy.end(), 0);
             break;
         }
         default: break;
     }
 }
 
-void StableSolver::SetBoundary(float *value, int flag)
+void StableSolver::SetBoundary(int flag, std::vector<float>& anOutValue)
 {
     static const std::array<std::pair<float, float>, 3> multipliers = {
             std::make_pair(1.f, 1.f),
@@ -88,16 +67,16 @@ void StableSolver::SetBoundary(float *value, int flag)
 
     for(int i=1; i<SIDE-1; i++)
     {
-        value[IDX_1D(i, 0)] = m.first * value[IDX_1D(i, 1)];
-        value[IDX_1D(i, SIDE-1)] = m.first * value[IDX_1D(i, SIDE-2)];
-        value[IDX_1D(0, i)] = m.second * value[IDX_1D(1, i)];
-        value[IDX_1D(SIDE-1, i)] = m.second * value[IDX_1D(SIDE-2, i)];
+        anOutValue[IDX_1D(i, 0)] = m.first * anOutValue[IDX_1D(i, 1)];
+        anOutValue[IDX_1D(i, SIDE-1)] = m.first * anOutValue[IDX_1D(i, SIDE-2)];
+        anOutValue[IDX_1D(0, i)] = m.second * anOutValue[IDX_1D(1, i)];
+        anOutValue[IDX_1D(SIDE-1, i)] = m.second * anOutValue[IDX_1D(SIDE-2, i)];
     }
 
-    value[IDX_1D(0, 0)] = (value[IDX_1D(0, 1)]+value[IDX_1D(1, 0)])/2;
-    value[IDX_1D(SIDE-1, 0)] = (value[IDX_1D(SIDE-2, 0)]+value[IDX_1D(SIDE-1, 1)])/2;
-    value[IDX_1D(0, SIDE-1)] = (value[IDX_1D(0, SIDE-2)]+value[IDX_1D(1, SIDE-1)])/2;
-    value[IDX_1D(SIDE-1, SIDE-1)] = (value[IDX_1D(SIDE-2, SIDE-1)]+value[IDX_1D(SIDE-1, SIDE-2)])/2;
+    anOutValue[IDX_1D(0, 0)] = (anOutValue[IDX_1D(0, 1)]+anOutValue[IDX_1D(1, 0)])/2;
+    anOutValue[IDX_1D(SIDE-1, 0)] = (anOutValue[IDX_1D(SIDE-2, 0)]+anOutValue[IDX_1D(SIDE-1, 1)])/2;
+    anOutValue[IDX_1D(0, SIDE-1)] = (anOutValue[IDX_1D(0, SIDE-2)]+anOutValue[IDX_1D(1, SIDE-1)])/2;
+    anOutValue[IDX_1D(SIDE-1, SIDE-1)] = (anOutValue[IDX_1D(SIDE-2, SIDE-1)]+anOutValue[IDX_1D(SIDE-1, SIDE-2)])/2;
 }
 
 void StableSolver::Projection()
@@ -114,8 +93,8 @@ void StableSolver::Projection()
             myP[IDX_1D(i, j)] = 0.0f;;
         }
     }
-    SetBoundary(myDiv, 0);
-    SetBoundary(myP, 0);
+    SetBoundary(0, myDiv);
+    SetBoundary(0, myP);
 
     constexpr auto projectionIterations = 20;
     constexpr auto factor = 1.f/4.f;
@@ -132,7 +111,7 @@ void StableSolver::Projection()
                         myDiv[IDX_1D(i, j)]) * factor;
             }
         }
-        SetBoundary(myP, 0);
+        SetBoundary(0, myP);
     }
 
     for(int i=1; i<=SIDE-2; i++)
@@ -144,11 +123,11 @@ void StableSolver::Projection()
         }
     }
 
-    SetBoundary(myVx, 1);
-    SetBoundary(myVy, 2);
+    SetBoundary(1, myVx);
+    SetBoundary(2, myVy);
 }
 
-void StableSolver::Advection(float *value, const float *value0, const float *u, const float *v, int flag)
+void StableSolver::Advection(std::vector<float>& value, const std::vector<float>& value0, const std::vector<float>& u, const std::vector<float>& v, int flag)
 {
     float oldX;
     float oldY;
@@ -188,10 +167,10 @@ void StableSolver::Advection(float *value, const float *value0, const float *u, 
         }
     }
     
-    SetBoundary(value, flag);
+    SetBoundary(flag, value);
 }
 
-void StableSolver::Diffusion(float *value, const float *value0, float rate, int flag)
+void StableSolver::Diffusion(std::vector<float>& value, const std::vector<float>& value0, float rate, int flag)
 {
     const auto a = rate*myTimeStep;
     const auto factor = 1.f / (4.0f * a + 1.0f);
@@ -210,7 +189,7 @@ void StableSolver::Diffusion(float *value, const float *value0, float rate, int 
                         value[IDX_1D(i, j-1)])) * factor;
             }
         }
-        SetBoundary(value, flag);
+        SetBoundary(flag, value);
     }
 }
 
@@ -224,7 +203,7 @@ void StableSolver::VortexConfinement()
         }
     }
 
-    SetBoundary(myVort, 0);
+    SetBoundary(0, myVort);
 
     for(int i=1; i < SIDE-1; ++i)
     {
@@ -249,8 +228,8 @@ void StableSolver::VortexConfinement()
         }
     }
 
-    SetBoundary(myVortFx, 0);
-    SetBoundary(myVortFy, 0);
+    SetBoundary(0, myVortFx);
+    SetBoundary(0, myVortFy);
 
     for(int i=1; i<=SIDE-2; i++)
     {
@@ -261,8 +240,8 @@ void StableSolver::VortexConfinement()
         }
     }
 
-    SetBoundary(myVx, 1);
-    SetBoundary(myVy, 2);
+    SetBoundary(1, myVx);
+    SetBoundary(2, myVy);
 }
 
 void StableSolver::AddSources()
@@ -274,9 +253,9 @@ void StableSolver::AddSources()
         myD[idx] += myD0[idx];
     }
 
-    SetBoundary(myD, 0);
-    SetBoundary(myVx, 1);
-    SetBoundary(myVy, 2);
+    SetBoundary(0, myD);
+    SetBoundary(1, myVx);
+    SetBoundary(2, myVy);
 
 }
 
