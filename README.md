@@ -1,1 +1,1 @@
-# stable-solver-uu
+# Semi-Lagrangian 2D Stable Solver
