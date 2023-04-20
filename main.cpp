@@ -11,10 +11,10 @@
 
 constexpr StableSolver::Settings defaultSettings
 {
-StableSolver::State::Running,
-0.003f,
-0.01f,
-0.01f
+    StableSolver::State::Running,
+    0.003f,
+    0.01f,
+    0.01f
 };
 
 StableSolver* solver = new StableSolver(defaultSettings);
